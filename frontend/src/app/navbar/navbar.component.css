@@ -1,0 +1,35 @@
+.space-between-elements {
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+
+.multiple-lines {
+  height: fit-content;
+  flex-wrap: wrap;
+}
+
+.box-shadow-bottom {
+  box-shadow: 0px 3px 9px gray;
+}
+
+.wide-buttons {
+  width: 11ch;
+  font-size: 22px;
+}
+
+.icon-size {
+  font-size: 36px;
+}
+
+.icon-middle {
+  width: fit-content;
+}
+
+.icon-button-size {
+  height: 50px;
+  width: 50px;
+}
+
+.rounded-borders {
+  border-radius: 10px;
+}

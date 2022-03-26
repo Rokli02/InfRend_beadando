@@ -1,0 +1,110 @@
+<div class="container">
+  <div class="request-report align-center" *ngIf="!monthlyReport; else hasMonthlyReport">
+    <mat-card class="card-height box-shadow">
+      <mat-card-header class="align-center">
+        <mat-card-title>Select attributes to make a monthly report!</mat-card-title>
+        <mat-card-subtitle class="small-text">Every attribute is required!</mat-card-subtitle>
+      </mat-card-header>
+      <form [formGroup]="reportForm" (ngSubmit)="requestMonthlyReport()" class="form-format align-center">
+        <mat-card-content>
+          <mat-form-field class="input-format">
+            <mat-label>Year</mat-label>
+            <input type="number" matInput formControlName="year"/>
+            <mat-error *ngIf="reportForm.get('year')?.valid">Not a valid year!</mat-error>
+          </mat-form-field><br>
+          <mat-form-field class="input-format">
+            <mat-label>Month</mat-label>
+            <input type="number" matInput formControlName="month"/>
+            <mat-error *ngIf="reportForm.get('month')?.valid">Not a real month!</mat-error>
+          </mat-form-field>
+          <mat-form-field class="input-format">
+            <mat-label>License Plate Number</mat-label>
+            <input type="text" #message matInput maxlength="7" formControlName="licensePlate"/>
+            <mat-hint class="small-text" align="end">{{message.value ? message.value?.length : 0}}/7</mat-hint>
+            <mat-error *ngIf="reportForm.get('licensePlate')?.valid">The given license plate is not valid!</mat-error>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-footer class="footer-format">
+          <mat-card-actions>
+            <button mat-button color="accent" type="submit">
+              Report
+            </button>
+          </mat-card-actions>
+        </mat-card-footer>
+      </form>
+    </mat-card>
+  </div>
+  <ng-template #hasMonthlyReport>
+    <div>
+      <mat-card class="box-shadow">
+        <mat-card-header class="align-center header-format">
+          <mat-card-title class="large-text">Monthly Report</mat-card-title>
+        </mat-card-header>
+        <div class="flex-content max-width">
+          <div class="car-card">
+            <mat-card class="box-shadow pt-3 pb-3 m-2">
+              <mat-card-header class="align-center">
+                <mat-card-title class="large-text">{{monthlyReport!.car.licensePlate}}</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <mat-card-subtitle class="align-center"><b>{{monthlyReport!.car.type}}</b></mat-card-subtitle>
+                <div class="space-between mt-2 mb-1">
+                  <span class="medium-text">Fuel: <b>{{monthlyReport!.car.fuel}}</b></span>
+                  <span class="medium-text">Consumption: <b>{{monthlyReport!.car.consumption}}</b>liter/100km</span>
+                </div>
+                <div class="align-center mt-2 mb-1">
+                  <span class="medium-text">Mileage: <b>{{monthlyReport!.car.mileage}}</b>km</span>
+                </div>
+                <div class="space-between mt-2">
+                  <span class="medium-text">Starting Mileage: <b>{{monthlyReport!.startingMileage}}</b>km</span>
+                  <span class="medium-text">Finishing Mileage: <b>{{monthlyReport!.finishingMileage}}</b>km</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+            <mat-card  class="box-shadow pt-3 pb-3 m-2">
+              <mat-card-header class="align-center">
+                <mat-card-title class="large-text">Travels</mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="pt-2">
+                <div class="flex-content align-center align-middle" *ngIf="monthlyReport !== null && monthlyReport!.travels !== null">
+                  <label class="m-1 medium-text" *ngFor="let travel of monthlyReport!.travels">{{travel}}</label>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          <div class="statistics-card">
+            <div class="m-2">
+              <mat-card class="box-shadow pt-2 pb-3">
+                <mat-card-header class="align-center">
+                  <mat-card-title class="large-text">Private travel statistics</mat-card-title>
+                </mat-card-header>
+                <mat-card-content class="mt-2">
+                  <p class="medium-text pb-1">Travelled Distance: <b>{{monthlyReport!.privateSummary.travelledDistance}}</b>km</p>
+                  <p class="medium-text pb-1">Consumption Cost: <b>{{monthlyReport!.privateSummary.consumptionCost}}</b>Ft</p>
+                  <p class="medium-text pb-1">Flat Rate: <b>{{monthlyReport!.privateSummary.flatRate}}</b>Ft</p>
+                  <hr>
+                  <p class="medium-text pt-1">Total Cost: <b>{{monthlyReport!.privateSummary.totalCost}}</b>Ft</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+            <div class="m-2">
+              <mat-card class="box-shadow pt-2 pb-3">
+                <mat-card-header class="align-center">
+                  <mat-card-title class="large-text">Business travel statistics</mat-card-title>
+                </mat-card-header>
+                <mat-card-content class="mt-2">
+                  <p class="medium-text pb-1">Travelled Distance: <b>{{monthlyReport!.businessSummary.travelledDistance}}</b>km</p>
+                  <p class="medium-text pb-1">Consumption Cost: <b>{{monthlyReport!.businessSummary.consumptionCost}}</b>Ft</p>
+                  <p class="medium-text pb-1">Flat Rate: <b>{{monthlyReport!.businessSummary.flatRate}}</b>Ft</p>
+                  <hr>
+                  <p class="medium-text pt-1">Total Cost: <b>{{monthlyReport!.businessSummary.totalCost}}</b>Ft</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+        <mat-card-footer class="footer-format"></mat-card-footer>
+      </mat-card>
+    </div>
+  </ng-template>
+</div>
