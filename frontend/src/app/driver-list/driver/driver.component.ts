@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Driver } from 'src/app/models/Driver';
 import { AddDriverComponent } from '../add-driver/add-driver.component';
@@ -10,10 +10,16 @@ import { AddDriverComponent } from '../add-driver/add-driver.component';
 })
 export class DriverComponent implements OnInit {
   @Input() driver !: Driver;
+  @Output() driverEdited = new EventEmitter<{id: number, driver: Driver}>();
+  @Output() driverDeleted = new EventEmitter<number>();
 
   constructor(private dialog: MatDialog) { }
 
   ngOnInit(): void {
+  }
+
+  deleteDriver() {
+    this.driverDeleted.emit(this.driver.id);
   }
 
   editDriver() {
@@ -29,12 +35,8 @@ export class DriverComponent implements OnInit {
       }
       else {
         console.log("EDIT");
-
+        this.driverEdited.emit({id: this.driver.id, driver: value});
       }
     });
-  }
-
-  deleteDriver() {
-
   }
 }

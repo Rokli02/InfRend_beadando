@@ -35,29 +35,12 @@ export class AddDriverComponent implements OnInit {
   }
 
   handleDriver() {
-    if(this.editMode){
-      this.addDriver();
-    } else {
-      this.editDriver();
-    }
-  }
-
-  private addDriver() {
     if(!this.driverForm.valid) {
       return console.log("Form is not valid!");
     }
 
-    //SERVICE osztályban megtörténik a hozzáadás, utána visszatér a hozzáadott elemmel, amit hozzáad a listához
-
-  }
-
-  private editDriver() {
-    if(!this.driverForm.valid) {
-      return console.log("Form is not valid!");
-    }
-
-    //SERVICE osztályban megtörténik a változtatás, utána visszatér a szerkesztett elemmel, amit felülír a listában
-    console.log(this.driverForm.value);
+    const driver : Driver = this.driverForm.value;
+    this.dialogRef.close(driver);
   }
 
   resetForm() {

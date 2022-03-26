@@ -19,7 +19,7 @@ export class Driver {
 
     @Column({
         unique: true,
-        length: 10
+        length: 8
     })
     driverLicense: string;
 
