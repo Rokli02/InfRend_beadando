@@ -6,7 +6,7 @@ export interface MonthlyReport {
     finishingMileage : number;
     travels : string[];
     privateSummary : Summary;
-    businesSummary : Summary;
+    businessSummary : Summary;
 }
 
 export interface Summary {

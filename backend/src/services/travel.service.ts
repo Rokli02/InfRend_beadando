@@ -175,10 +175,17 @@ export class TravelService extends Service {
         }
         if(req.body.to && req.body.to !== travel1.to) {
             travel2PatchProperties.from = req.body.to;
-        }//A kilóméteróra állás itteni eltárolása törékeny
+        }//A kilóméteróra állás itteni eltárolása törékeny VOLT
         if(req.body.travelledDistance && req.body.travelledDistance !== travel1.travelledDistance) {
             const beforeJourneyMileage = travel1.newMileage - travel1.travelledDistance;
+            const mileageDifference = req.body.newMileage - beforeJourneyMileage;
             req.body.newMileage = beforeJourneyMileage + req.body.travelledDistance;
+
+            try {
+                await this.changeMileage(car.licensePlate, beforeJourneyMileage, mileageDifference);
+            }catch(err) {
+                return errorHandler(res, "Error during mileage update!", 500);
+            }
             
             travel2PatchProperties.travelledDistance = req.body.travelledDistance;
             travel2PatchProperties.newMileage = beforeJourneyMileage + (req.body.travelledDistance*2);
@@ -216,44 +223,54 @@ export class TravelService extends Service {
 
         const licenseNumber : string = String(req.query.licensePlate);
 
-        const travels: Travel[] = await this.repository.findBy(
+        const unfilteredTravels: Travel[] = await this.repository.findBy(
         {
             car : { 
                 licensePlate: licenseNumber
             }
         });
-        if(travels.length <= 0){
+        if(unfilteredTravels.length <= 0){
             return errorHandler(res, "There are no travel information of the car with such license number!", 404);
         }
 
-        //
-        //ADOTT ÉV/HÓNAP KERETET ADNI NEKI, MERT NEM A KERETEN BELÜL ADJA VISSZA AZ ÉRTÉKEKET!!!
-        //
+        let year : number = Number(req.query.year),
+            month : number = Number(req.query.month);
 
+        const dateBelowValues = new Date(year, month);
+        if(month === 12){
+            year++;
+        } else {
+            month++;
+        }
+        const dateAboveValues = new Date(year, month);
+        const travels: Travel[] = unfilteredTravels.filter((value) => {
+            (value.startDate >= dateBelowValues && value.startDate < dateAboveValues)
+        });
+
+
+        const car = travels[0].car;
         const lowestHighestMileage = this.lowestHighestPairs(travels);
         const privateSummary: Summary = this.costSummary(travels.filter((value) => value.purpose === Purpose.PRIVATE), travels[0].car);
         const businesSummary: Summary = this.costSummary(travels.filter((value) => value.purpose === Purpose.BUSINESS), travels[0].car);
         let travelsFromToLocation: string[] = [];
-
         for(let travel of travels) {
             console.log(travel.from+" - "+travel.to);
             travelsFromToLocation.push(travel.from+" - "+travel.to);
         }
         
-        const car = travels[0].car;
         let monthlyReport : MonthlyReport = {
             car: car,
             startingMileage: lowestHighestMileage[0],
             finishingMileage: lowestHighestMileage[1],
             travels: travelsFromToLocation,
             privateSummary: privateSummary,
-            businesSummary: businesSummary
+            businessSummary: businesSummary
         };
 
         res.json(monthlyReport);
     }
 
-    lowestHighestPairs(travels: Travel[]) {
+    private lowestHighestPairs(travels: Travel[]) {
         let lowestMileage: number = travels[0].newMileage, highestMileage: number = 0;
         for(let travel of travels) {
             if(travel.newMileage < lowestMileage)
@@ -299,5 +316,14 @@ export class TravelService extends Service {
             return false;
         }
         return true;
+    }
+
+    private changeMileage(licensePlate: string, above: number, changeBy: number) {
+        return this.repository.createQueryBuilder().update(
+            {
+                newMileage: () => ("newMileage +"+changeBy)
+            }).where("car.licensePlate = :licensePlate",{licensePlate}
+            ).andWhere("newMileage > :newMileage",{above}
+            ).execute();
     }
 }
