@@ -12,7 +12,6 @@ export function getTravelRoute(dataSource : DataSource) : Router {
     router.patch('/:id', travelService.checkParamId, givenPropertyValid, travelService.patchBackAndForth);
     router.delete('/:id', travelService.checkParamId, travelService.deleteBackAndForth);
     router.get('/report', travelService.monthlyReport);
-    
 
     return router;
 }

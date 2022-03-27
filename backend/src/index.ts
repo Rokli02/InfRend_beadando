@@ -1,6 +1,7 @@
 import "reflect-metadata"
 import { AppDataSource } from "./data-source";
 import * as express from 'express';
+import * as cors from 'cors'; 
 import { getDriverRoute } from "./routes/driver.route";
 import { DataSource } from "typeorm";
 import { getCarRoute } from "./routes/car.route";
@@ -11,6 +12,7 @@ AppDataSource.initialize().then(async (dataSource : DataSource) => {
     const app = express();
     //const entityManager = AppDataSource.createEntityManager();
 
+    app.use(cors());
     app.use(express.json());
     
     app.use('/api/driver', getDriverRoute(dataSource));
@@ -27,7 +29,7 @@ AppDataSource.initialize().then(async (dataSource : DataSource) => {
 
 }).catch(error => {
     if(error instanceof Error){
-        console.log(error.message.includes("ECONNREFUSED") ? "Couldn't connect to the database!" : error.message);
+        console.log(error.message.includes("ECONNREFUSED") ? "Couldn't connect to the database!" : error);
     } else {
         console.log(error)
     }

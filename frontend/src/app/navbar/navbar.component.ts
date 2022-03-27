@@ -11,7 +11,7 @@ export class NavbarComponent implements OnInit{
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    //this.router.navigate(['']);
+    this.router.navigate(['']);
     this.active = new Array<boolean>(4);
     this.deactivateAll();
     this.active[0] = true;

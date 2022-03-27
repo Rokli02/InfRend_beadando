@@ -8,6 +8,7 @@ export function getDriverRoute(dataSource : DataSource) : Router {
     const driverService = new DriverService(dataSource);
 
     router.get('/', driverService.findAll);
+    router.get('/notexpired', driverService.findAllNotExpired);
     router.post('/', allPropertyValid, driverService.save);
     router.put('/:id', driverService.checkParamId, allPropertyValid, driverService.update);
     router.patch('/:id', driverService.checkParamId, givenPropertyValid, driverService.patch);

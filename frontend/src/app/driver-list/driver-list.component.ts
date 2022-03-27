@@ -47,19 +47,22 @@ export class DriverListComponent implements OnInit, OnDestroy {
         if(!this.drivers.find((driver) => driver.driverLicense === value.driverLicense)){
           try {
             await this.driverService.saveDriver(value);
+
+            value.birthdate = this.convertToAcceptableDate(value.birthdate);
+            value.driverLicenseExpiration = this.convertToAcceptableDate(value.driverLicenseExpiration);
             this.drivers.push(value);
           }catch(err) {
-            console.log("Couldn't save driver:\n"+err);
+            console.log("Couldn't save driver!");
+            console.log(err);
           }
         } else {
           alert('Driver with such driver license already exists!');
         }
       }
-      console.log(value);
     });
   }
 
-  async editDriver(driverWrap: {id: number, driver: Driver}) {
+  async editDriver(driverWrap: {id: number, driver: any}) {
     let index : number = -1;
     for(let i = 0; i < this.drivers.length; i++) {
       if(this.drivers[i].id === driverWrap.id) {
@@ -74,13 +77,14 @@ export class DriverListComponent implements OnInit, OnDestroy {
         this.drivers[index] = {
           id: driverWrap.id,
           name: driverWrap.driver.name,
-          birthdate: driverWrap.driver.birthdate,
+          birthdate: this.convertToAcceptableDate(driverWrap.driver.birthdate),
           address: driverWrap.driver.address,
           driverLicense: driverWrap.driver.driverLicense,
-          driverLicenseExpiration: driverWrap.driver.driverLicenseExpiration
+          driverLicenseExpiration: this.convertToAcceptableDate(driverWrap.driver.driverLicenseExpiration)
         }
       }catch(err) {
-        console.log("Couldn't edit driver:\n"+err);
+        console.log("Couldn't edit driver!");
+        console.log(err);
       }
       return;
     }
@@ -102,11 +106,20 @@ export class DriverListComponent implements OnInit, OnDestroy {
         await this.driverService.deleteDriver(id);
         this.drivers.splice(index, 1);
       }catch(err) {
-        console.log("Couldn't delete driver:\n"+err);
+        console.log("Couldn't delete driver!");
+        console.log(err);
       }
       return;
     }
 
     alert("Couldn't delete driver, because it isn't on the list!");
+  }
+
+  private convertToAcceptableDate(dateParam: string){
+    const date : Date = new Date(dateParam);
+    const month: string = (date.getMonth() + 1) < 10 ? "0"+(date.getMonth() + 1) : String(date.getMonth() + 1);
+    const day: string = (date.getDate()) < 10 ? "0"+(date.getDate()) : String(date.getDate());
+
+    return date.getFullYear()+"-"+ month + "-" + day;
   }
 }

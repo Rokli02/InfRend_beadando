@@ -7,11 +7,21 @@ import { Driver } from '../models/Driver';
   providedIn: 'root'
 })
 export class DriverService {
-  private url: string = 'http://localhost:3000/driver';
+  private url: string = 'http://localhost:3000/api/driver';
   constructor(private http: HttpClient) {}
 
   getDrivers() {
     return lastValueFrom(this.http.get<Driver[]>(this.url));
+  }
+
+  getDriversLicenseNotExpired(expirationDate: Date | string) {
+    const expDate = this.transformDateToAcceptable(expirationDate);
+
+    return lastValueFrom(this.http.get<Driver[]>(`${this.url}/notexpired`, {
+      params: {
+        expDate: expDate
+      }
+    }));
   }
 
   saveDriver(driver: Driver) {
@@ -24,5 +34,11 @@ export class DriverService {
 
   deleteDriver(id: number) {
     return lastValueFrom(this.http.delete(`${this.url}/${id}`));
+  }
+
+  private transformDateToAcceptable(paramDate: string | Date) : string {
+    const preDate : Date = new Date(paramDate);
+
+    return `${preDate.getFullYear()}-${preDate.getMonth()+1}-${preDate.getDate()}`;
   }
 }

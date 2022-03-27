@@ -58,6 +58,14 @@ export function givenPropertyValid(req: Request, res: Response, next: NextFuncti
     if(req.body.newMileage) {
         return errorHandler(res, "Can't give 'newMileage' property as an input parameter!", 400);
     }
+    if(req.body.driverId !== undefined &&
+        (dataEmpty(req.body.driverId))) {
+        return errorHandler(res, "Given 'driverId' parameter must be given!", 400);
+    }
+    if(req.body.carId !== undefined &&
+        (dataEmpty(req.body.carId))) {
+        return errorHandler(res, "Given 'carId' parameter must be given!", 400);
+    }
 
     next();
 }
@@ -73,11 +81,14 @@ function purposeValid(purpose: string) {
 }
 
 function dataEmpty(dataParam: string) {
-    return (dataParam.trim() === '')
+    const data : string = String(dataParam);
+    return data === '' ||
+           data === ' ' ||
+           data.includes('  ');
 }
 
 function validDate(date: string): boolean {
-    const regex = "^([1-2][0-9]{3}[\/-](([1-9])|([1][0-2]))[\/-](([1])|([1-2]{0,1}[0-9])|([3][0-1])))$";
+    const regex = /^([1-2][0-9]{3}[-](([1-9])|([1][0-2]))[-](([1])|([1-2]{0,1}[0-9])|([3][0-1])))$/;
 
     if(date.match(regex))
         return true;

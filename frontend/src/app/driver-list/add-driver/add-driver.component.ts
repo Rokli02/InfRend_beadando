@@ -19,19 +19,22 @@ export class AddDriverComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: Driver) {}
 
   ngOnInit(): void {
+    this.driverForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(256)]],
+      birthdate: ['', [Validators.required]],
+      address: ['', [Validators.required, Validators.maxLength(256)]],
+      driverLicense: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8), Validators.pattern(/[A-Z]{2}[1-9][0-9]{5}/)]],
+      driverLicenseExpiration: ['', [Validators.required]]
+    });
+
     if(this.data){
-      this.editMode = true;
-      this.title = "Edit driver";
-      this.handleButton = "Edit";
+    this.editMode = true;
+    this.title = "Edit driver";
+    this.handleButton = "Edit";
+    this.resetForm();
     }
 
-    this.driverForm = this.fb.group({
-      name: [this.editMode ? this.data.name : '', [Validators.required, Validators.maxLength(256)]],
-      birthdate: [this.editMode ? this.data.birthdate : '', [Validators.required]],
-      address: [this.editMode ? this.data.address : '', [Validators.required, Validators.maxLength(256)]],
-      driverLicense: [this.editMode ? this.data.driverLicense : '', [Validators.required, Validators.minLength(8), Validators.maxLength(8), Validators.pattern(/[A-Z]{2}[1-9][0-9]{5}/)]],
-      driverLicenseExpiration: [this.editMode ? this.data.driverLicenseExpiration : '', [Validators.required]]
-    });
+    console.log(this.driverForm.value);
   }
 
   handleDriver() {
@@ -39,7 +42,10 @@ export class AddDriverComponent implements OnInit {
       return console.log("Form is not valid!");
     }
 
-    const driver : Driver = this.driverForm.value;
+    let driver : Driver = this.driverForm.value;
+    driver.birthdate = this.transformDateToAcceptable(driver.birthdate);
+    driver.driverLicenseExpiration = this.transformDateToAcceptable(driver.driverLicenseExpiration);
+
     this.dialogRef.close(driver);
   }
 
@@ -51,5 +57,11 @@ export class AddDriverComponent implements OnInit {
 
   cancel() {
     this.dialogRef.close(null);
+  }
+
+  private transformDateToAcceptable(paramDate: string) : string {
+    const preDate : Date = new Date(paramDate);
+
+    return `${preDate.getFullYear()}-${preDate.getMonth()+1}-${preDate.getDate()}`;
   }
 }

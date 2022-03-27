@@ -8,7 +8,7 @@ import { SaveTravel, Travel } from '../models/Travel';
   providedIn: 'root'
 })
 export class TravelService {
-  private url: string = 'http://localhost:3000/travel';
+  private url: string = 'http://localhost:3000/api/travel';
   constructor(private http: HttpClient) {}
 
   getTravels() {
@@ -29,7 +29,7 @@ export class TravelService {
     return lastValueFrom(this.http.post(this.url, travelForSave));
   }
 
-  updateTravel(id: number, travel: Travel) {
+  updateTravel(id: number, travel: SaveTravel) {/*
     const travelForSave : SaveTravel= {
       from: travel.from ? travel.from : undefined,
       to: travel.to ? travel.to : undefined,
@@ -39,9 +39,8 @@ export class TravelService {
       newMileage: travel.newMileage ? travel.newMileage : undefined,
       carId: travel.car.id ? travel.car.id : undefined,
       driverId: travel.driver.id ? travel.driver.id : undefined,
-    };
-
-    return lastValueFrom(this.http.patch(`${this.url}/${id}`,travelForSave));
+    };*/
+    return lastValueFrom(this.http.patch(`${this.url}/${id}`,travel));
   }
 
   deleteTravel(id: number) {

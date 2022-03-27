@@ -6,7 +6,7 @@ export interface Travel {
   from: string;
   to: string;
   purpose: Purpose;
-  startDate: Date;
+  startDate: string;
   travelledDistance: number;
   newMileage: number;
   driver: Driver;
@@ -17,7 +17,7 @@ export interface SaveTravel {
   from ?: string;
   to ?: string;
   purpose ?: Purpose;
-  startDate ?: Date;
+  startDate ?: string;
   travelledDistance ?: number;
   newMileage ?: number;
   carId ?: number;

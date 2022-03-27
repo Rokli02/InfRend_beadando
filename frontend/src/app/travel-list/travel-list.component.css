@@ -25,3 +25,11 @@
   grid-auto-flow: row;
   gap: 10px;
 }
+
+.align-center-text {
+  text-align: center;
+}
+
+.pt-5 {
+  padding-top: 5rem;
+}

@@ -30,7 +30,7 @@ export abstract class Service {
 
         try {
             await this.repository.save(entity);
-            res.status(201).json("Data has been saved!");
+            res.status(201).json({id: entity.id, saved: true});
         }catch(err) {
             if(err instanceof QueryFailedError) {
                 if(err.message.includes("Duplicate entry")){
@@ -48,7 +48,8 @@ export abstract class Service {
         if(!data){
             return errorHandler(res, "Data does not exists with the given id!", 404);
         }
-
+        
+        req.body.id = Number(req.params.id);
         const entity = this.repository.create(req.body);
         if(!entity) {
             return errorHandler(res, "Data properties do not match!", 406);
@@ -56,7 +57,7 @@ export abstract class Service {
         
         try{
             await this.repository.save(entity);
-            res.status(200).send("Data has been updated!");
+            res.status(200).json({id: entity.id, updated: true});
         }catch(err) {
             console.log(err);
             errorHandler(res);
@@ -81,7 +82,7 @@ export abstract class Service {
 
         try {
             await this.repository.update({id: req.params.id}, entity);
-            res.status(200).json("Data is patched successfully!");
+            res.status(200).json({id: entity.id, patched: true});
         } catch(err) {
             console.log(err);
             errorHandler(res);
@@ -96,7 +97,7 @@ export abstract class Service {
         }
         try {
             await this.repository.delete(data);
-            res.status(200).send("Data has been deleted!");
+            res.status(200).json({id: data.id, deleted: true});
         } catch(err) {
             console.log(err);
             errorHandler(res);

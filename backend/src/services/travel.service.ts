@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, LessThanOrEqual, Repository } from "typeorm";
 import { Car } from "../entities/Car";
 import { Driver } from "../entities/Driver";
 import { Purpose, Travel } from "../entities/Travel";
@@ -29,7 +29,7 @@ export class TravelService extends Service {
         if(!driver) {
             return errorHandler(res, "Driver with the given id does not exists!", 404);
         }
-        if(this.licenseExpired(new Date(driver.driverLicenseExpiration))){
+        if(this.licenseExpired(driver.driverLicenseExpiration)){
             return errorHandler(res, "Driver's license is expired!", 400);
         }
 
@@ -37,41 +37,31 @@ export class TravelService extends Service {
         if(!car) {
             return errorHandler(res, "Car with the given id does not exists!", 404);
         }
-
+        
         const journeyFromDb = await this.repository.findOneBy({
             from: req.body.from,
             purpose: req.body.purpose,
             startDate: req.body.startDate,
             travelledDistance: req.body.travelledDistance,
-            driver: { id: req.body.driver},
-            car: { id: req.body.car}
+            driver: { id: req.body.driverId},
+            car: { id: req.body.carId}
         });
         if(journeyFromDb) {
             return errorHandler(res, "Travel with similar properties already exists!", 406);
         }
 
-        const carMileage = await this.repository.find({
-            select: ["newMileage"],
-            where: {
-                car: {
-                    id: car.id
-                }
-            }
-        }).then((values)=> {
-            let highest = -1;
-            for(let value of values){
-                console.log(value);
-                if(value.newMileage > highest){
-                    highest = value.newMileage;
-                }
-            }
-            return highest;
-        }).then((value) => {
-            if(value === -1){
-                return car.mileage;
-            }
-            return value;
-        });
+        let carMileage : number;
+        try {
+            carMileage = await this.getHighestMileage(car.id, car.mileage, new Date(req.body.startDate));
+        } catch(err) {
+            return errorHandler(res, "Car mileage couldn't be queried!", 500);
+        }
+
+        try {
+            await this.changeMileageAbove(car.id, req.body.travelledDistance, null, req.body.startDate)
+        } catch(err) {
+            return errorHandler(res, "Couldn't update subsequent travels!", 500);
+        }
         
         req.body.driver = driver;
         req.body.car = car;
@@ -81,15 +71,10 @@ export class TravelService extends Service {
         req.body.newMileage = newMileage;
         
         const travel1 = this.repository.create(req.body);
-        try {
-            await this.repository.save(travel1);
-        }catch(err) {
-            return errorHandler(res);
-        }
         
         //Insert to-from
         const newTo = req.body.from,
-              newFrom = req.body.to;
+        newFrom = req.body.to;
         const newMileageBackway = req.body.travelledDistance + newMileage;
         if(req.body.id){
             req.body.id = 0;
@@ -97,13 +82,17 @@ export class TravelService extends Service {
         req.body.newMileage = newMileageBackway;
         req.body.from = newFrom;
         req.body.to = newTo;
-
+        
         const travel2 = this.repository.create(req.body);
         try {
-            await this.repository.save(travel2);
-            res.status(201).send("Travel created successfully!");
+            await this.repository.save([travel1,travel2]);
+            res.status(201).send({
+                ids : [
+                    {id : travel1.id}, 
+                    {id : travel2.id}
+                ],
+                saved: true});
         }catch(err) {
-            this.repository.remove(travel1);
             return errorHandler(res);
         }
     }
@@ -128,7 +117,12 @@ export class TravelService extends Service {
 
         try {
             await this.repository.remove([travel1, travel2]);
-            res.status(200).send("Travel(s) has been successfully deleted!");
+            res.status(200).send({
+                ids : [
+                    {id : travel1.id}, 
+                    {id : travel2.id}
+                ],
+                deleted: true});
         }catch(err) {
             errorHandler(res);
         }
@@ -156,61 +150,111 @@ export class TravelService extends Service {
             return errorHandler(res, "Driver with the car don't have a planed backway!", 404);
         }
 
-        const driver : Driver = await this.repository.findOneBy({id: req.body.driverId});
-        if(!driver) {
-            return errorHandler(res, "Driver with the given id does not exists!", 404);
-        }
-        if(this.licenseExpired(new Date(driver.driverLicenseExpiration))){
-            return errorHandler(res, "Driver's license is expired!", 400);
-        }
+        let travel2PatchProperties: Travel = {
+            id: undefined,
+            from: undefined,
+            to: undefined,
+            travelledDistance: undefined,
+            newMileage: undefined,
+            purpose: undefined,
+            startDate: undefined,
+            driver: undefined,
+            car: undefined
+        };
+        let patchableCarId = travel1.car.id;
 
-        const car : Car = await this.carRepository.findOneBy({id: req.body.carId});
-        if(!car) {
-            return errorHandler(res, "Car with the given id does not exists!", 404);
-        }
-
-        let travel2PatchProperties: any;
         if(req.body.from && req.body.from !== travel1.from){
             travel2PatchProperties.to = req.body.from;
         }
         if(req.body.to && req.body.to !== travel1.to) {
             travel2PatchProperties.from = req.body.to;
-        }//A kilóméteróra állás itteni eltárolása törékeny VOLT
+        }
+        if(req.body.carId && req.body.carId !== travel1.car.id) {
+            const car : Car = await this.carRepository.findOneBy({id: req.body.carId});
+            if(!car) {
+                return errorHandler(res, "Car with the given id does not exists!", 404);
+            }
+            patchableCarId = car.id;
+
+            //Update | azok az autók kilóméteróra állását ahonnan kivesszük (csökkenteni), a párjának újraszámolni 
+            try {
+                //await this.changeMileageAbove(travel1.car.id, -(travel1.travelledDistance), null, )
+                travel2PatchProperties.newMileage = this.calculatePairMileage();
+            } catch(err){
+                return errorHandler(res, "Error at car change (origin change)!", 500);
+            }
+
+            //Update | azok az autók kilóméteróra állását ahova berakjuk (növelni)
+
+            //Beállítani lementésre
+            travel2PatchProperties.car = car;
+            req.body.car = car;
+        }
+        if(req.body.driverId && req.body.driverId !== travel1.driver.id){
+            const driver : Driver = await this.driverRepository.findOneBy({id: req.body.driverId});
+            if(!driver) {
+                return errorHandler(res, "Driver with the given id does not exists!", 404);
+            }
+            if(this.licenseExpired(driver.driverLicenseExpiration)){
+                return errorHandler(res, "Driver's license is expired!", 400);
+            }
+
+            travel2PatchProperties.driver = driver;
+            req.body.driver = driver;
+        }
+        if(req.body.startDate && req.body.startDate !== travel1.startDate) {
+
+            //Update azokat, amik a régi és a beállított érték között van, AKKOR HA nem történt Auto váltás
+            if(travel2PatchProperties.car === undefined) {
+                // Időben előrébb lett rakva az utazás -> növelni kell az utazás hosszával a dolgokat
+                if(travel1.startDate < new Date(req.body.startDate)){
+                    try{
+                    this.changeMileageInterval(patchableCarId, (travel1.travelledDistance), travel1.startDate, new Date(req.body.startDate));
+                    }catch(err) {
+                        return errorHandler(res, "Error at start date change (if branch)!", 500);
+                    }
+                }//Időben visszább lett rakva az utazás -> csökkenteni kell az utazás hosszával
+                else {
+                    try{
+                        this.changeMileageInterval(patchableCarId, -(travel1.travelledDistance), new Date(req.body.startDate), travel1.startDate);
+                    }catch(err) {
+                        return errorHandler(res, "Error at start date change (else branch)!", 500);
+                    }
+                }
+            }
+
+            //Beállítani
+            travel2PatchProperties.startDate = req.body.startDate;
+        }
         if(req.body.travelledDistance && req.body.travelledDistance !== travel1.travelledDistance) {
             const beforeJourneyMileage = travel1.newMileage - travel1.travelledDistance;
-            const mileageDifference = req.body.newMileage - beforeJourneyMileage;
-            req.body.newMileage = beforeJourneyMileage + req.body.travelledDistance;
+            const mileageDifference = req.body.travelledDistance - travel1.travelledDistance;
+            
+            //Update adatbázisba levő értékeket
+            if(travel2PatchProperties.car === undefined) {
 
-            try {
-                await this.changeMileage(car.licensePlate, beforeJourneyMileage, mileageDifference);
-            }catch(err) {
-                return errorHandler(res, "Error during mileage update!", 500);
+                try {
+                    this.changeMileageAbove(patchableCarId, mileageDifference, beforeJourneyMileage, null);
+                }catch(err) {
+                    return errorHandler(res, "Error during mileage update!", 500);
+                }
             }
             
+            //Beállítás mentésre
+            req.body.newMileage = beforeJourneyMileage + req.body.travelledDistance;
             travel2PatchProperties.travelledDistance = req.body.travelledDistance;
             travel2PatchProperties.newMileage = beforeJourneyMileage + (req.body.travelledDistance*2);
         }
         if(req.body.purpose && req.body.purpose !== travel1.purpose){
             travel2PatchProperties.purpose = req.body.purpose;
         }
-        if(req.body.startDate && req.body.startDate !== travel1.startDate) {
-            travel2PatchProperties.startDate = req.body.startDate;
-        }
-        if(req.body.driver && req.body.driver !== travel1.driver){
-            travel2PatchProperties.driver = req.body.driver;
-            req.body.driver = driver;
-        }
-        if(req.body.car && req.body.car !== travel1.car) {
-            travel2PatchProperties.car = car;
-            req.body.car = car;
-        }
 
         const travel1Patch = this.repository.create(req.body);
         const travel2Patch = this.repository.create(travel2PatchProperties);
         try {
-            await this.repository.update({id: req.params.id}, travel1Patch)
+            await this.repository.update({id: travel1.id}, travel1Patch)
             await this.repository.update({id: travel2.id}, travel2Patch);
-            res.status(200).send("Travels have been successfully patched!");
+            res.status(200).send({patched: true});
         }catch(err) {
             errorHandler(res);
         }
@@ -254,7 +298,6 @@ export class TravelService extends Service {
         const businesSummary: Summary = this.costSummary(travels.filter((value) => value.purpose === Purpose.BUSINESS), travels[0].car);
         let travelsFromToLocation: string[] = [];
         for(let travel of travels) {
-            console.log(travel.from+" - "+travel.to);
             travelsFromToLocation.push(travel.from+" - "+travel.to);
         }
         
@@ -294,11 +337,12 @@ export class TravelService extends Service {
               flatRate: number = 10,
               consumption: number = car.consumption;
         let summary: Summary;
-        let lowestHighestMileage: number[],
-            fuelSum: number = 0;
+        let fuelSum: number = 0;
 
-        lowestHighestMileage = this.lowestHighestPairs(travels);
-        const distanceSum = lowestHighestMileage[1] - lowestHighestMileage[0];
+        let distanceSum : number = 0;
+        for(let travel of travels) {
+            distanceSum += travel.travelledDistance;
+        }
         fuelSum = consumption * (distanceSum / 100)
 
         summary = {
@@ -312,18 +356,90 @@ export class TravelService extends Service {
     }
 
     private licenseExpired(licenseDate: Date): boolean {
-        if(Date.now() < licenseDate.getTime()) {
-            return false;
+        if(new Date() > new Date(licenseDate)) {
+            return true;
         }
-        return true;
+        return false;
     }
 
-    private changeMileage(licensePlate: string, above: number, changeBy: number) {
+    private calculatePairMileage(mileage: number, distance: number){
+
+    }
+
+    private changeMileageAbove = (carId: number, changeBy: number, above: number | null, aboveDate: string | null) => {
+        if(above !== null && above !== undefined) {
+            return this.repository.createQueryBuilder().update(
+                {
+                    newMileage: () => ("newMileage + "+changeBy)
+                }).where("carId = :carId",{carId: carId}).
+                andWhere("newMileage > :newMileage",{newMileage: above}).
+                execute();
+        }
+        if(aboveDate !== null && aboveDate !== undefined) {
+            return this.repository.createQueryBuilder().update(
+                {
+                    newMileage: () => ("newMileage + "+changeBy)
+                }).where("carId = :carId",{carId: carId}).
+                andWhere("startDate > :startDate",{startDate: aboveDate}).
+                execute();
+        }
+    }
+
+    private changeMileageInterval = (carId: number, changeBy: number, lowerLimit: Date, upperLimit: Date) => {
         return this.repository.createQueryBuilder().update(
             {
-                newMileage: () => ("newMileage +"+changeBy)
-            }).where("car.licensePlate = :licensePlate",{licensePlate}
-            ).andWhere("newMileage > :newMileage",{above}
-            ).execute();
+                newMileage: () => ("newMileage + "+changeBy)
+            }).where("carId = :carId",{carId: carId}).
+            andWhere("startDate > : lowerLimit",{lowerLimit : lowerLimit}).
+            andWhere("startDate < : upperLimit", {upperLimit : upperLimit}).
+            execute();
+    }
+
+    private getHighestMileage = (carId: number, defaultMileage : number = 0, date?: Date) => {
+        if(date){
+            return this.repository.find({
+                select: ["newMileage"],
+                where: {
+                    car: {
+                        id: carId
+                    },
+                    startDate: LessThanOrEqual(date),
+                }
+            }).then((values)=> {
+                let highest = -1;
+                for(let value of values){
+                    if(value.newMileage > highest){
+                        highest = value.newMileage;
+                    }
+                }
+                return highest;
+            }).then((value) => {
+                if(value === -1){
+                    return defaultMileage;
+                }
+                return value;
+            });
+        }
+        return this.repository.find({
+            select: ["newMileage"],
+            where: {
+                car: {
+                    id: carId
+                }
+            }
+        }).then((values)=> {
+            let highest = -1;
+            for(let value of values){
+                if(value.newMileage > highest){
+                    highest = value.newMileage;
+                }
+            }
+            return highest;
+        }).then((value) => {
+            if(value === -1){
+                return defaultMileage;
+            }
+            return value;
+        });
     }
 }

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { errorHandler } from "../services/service";
 
 export function allPropertyValid(req: Request, res: Response, next: NextFunction) {
-    const DRIVER_LICENSE_LENGTH = 10;
+    const DRIVER_LICENSE_LENGTH = 8;
 
     if(!req.body.name) {
         return errorHandler(res, "Given 'name' parameter is not valid!", 400);
@@ -16,7 +16,8 @@ export function allPropertyValid(req: Request, res: Response, next: NextFunction
         return errorHandler(res, "Given 'address' parameter is not valid!", 400);
     }
     if(!req.body.driverLicense ||
-        req.body.driverLicense.length !== DRIVER_LICENSE_LENGTH) {
+        req.body.driverLicense.length !== DRIVER_LICENSE_LENGTH ||
+        !validDriverLicense(req.body.driverLicense)) {
         return errorHandler(res, "Given 'driverLicense' parameter is not valid!", 400);
     }
     if(!req.body.driverLicenseExpiration ||
@@ -28,7 +29,7 @@ export function allPropertyValid(req: Request, res: Response, next: NextFunction
 }
 
 export function givenPropertyValid(req: Request, res: Response, next: NextFunction) {
-    const DRIVER_LICENSE_LENGTH = 10;
+    const DRIVER_LICENSE_LENGTH = 8;
     
     if(req.body.name !== undefined && 
         (dataEmpty(req.body.name))) {
@@ -45,7 +46,9 @@ export function givenPropertyValid(req: Request, res: Response, next: NextFuncti
         return errorHandler(res, "Given 'address' parameter is not valid!", 400);
     }
     if(req.body.driverLicense !== undefined &&
-        (dataEmpty(req.body.driverLicense) ||req.body.driverLicense.length !== DRIVER_LICENSE_LENGTH)) {
+        (dataEmpty(req.body.driverLicense) ||
+        req.body.driverLicense.length !== DRIVER_LICENSE_LENGTH ||
+        !validDriverLicense(req.body.driverLicense))) {
         return errorHandler(res, "Given 'driverLicense' parameter is not valid!", 400);
     }
     if(req.body.driverLicenseExpiration !== undefined &&
@@ -77,4 +80,12 @@ function atLeast17YearsOld(date: string): boolean {
         return false;
     }
     return true;
+}
+
+function validDriverLicense(license: string) {
+    const regex = /^([A-Z]{2}[1-9][0-9]{5})$/;
+    if(license.match(regex)) {
+        return true;
+    }
+    return false;
 }
