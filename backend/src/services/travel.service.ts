@@ -58,7 +58,7 @@ export class TravelService extends Service {
         }
 
         try {
-            await this.changeMileageAbove(car.id, req.body.travelledDistance, null, req.body.startDate);
+            await this.changeMileageAbove(car.id, (req.body.travelledDistance*2), null, req.body.startDate);
         } catch(err) {
             return errorHandler(res, "Couldn't update subsequent travels!", 500);
         }
@@ -115,7 +115,7 @@ export class TravelService extends Service {
 
         //A későbbi utazások ugyan azon autón, ki kell vonni az utazott távolságot mindegyikből
         try {
-            await this.changeMileageAbove(travel1.car.id, -(travel1.travelledDistance), travel1.newMileage, null);
+            await this.changeMileageAbove(travel1.car.id, -(travel1.travelledDistance*2), travel1.newMileage, null);
         }catch(err) {
             return errorHandler(res, "Couldn't update subsequent travels on delete!", 404);
         }
@@ -167,7 +167,7 @@ export class TravelService extends Service {
         };
         const travel1SmallerPair = travel1.newMileage < travel2.newMileage;
         let patchableCarId = travel1.car.id;
-        let startMileage = travel1SmallerPair ? travel1.newMileage : travel2.newMileage;
+        let startMileage = (travel1SmallerPair ? travel1.newMileage : travel2.newMileage) - travel1.travelledDistance;
 
         if(req.body.from && req.body.from !== travel1.from){
             travel2PatchProperties.to = req.body.from;
@@ -182,19 +182,30 @@ export class TravelService extends Service {
             }
             patchableCarId = car.id;
 
-            //Update | azok az autók kilóméteróra állását ahonnan kivesszük (csökkenteni), a párjának újraszámolni 
+            //Update | azok az autók kilóméteróra állását ahonnan kivesszük (csökkenteni)
             try {
-                await this.changeMileageAbove(travel1.car.id, -(travel1.travelledDistance), travel1.newMileage, null);
-                travel2PatchProperties.newMileage = travel1SmallerPair ?
-                                                     startMileage + (travel1.travelledDistance*2) :
-                                                     startMileage + travel1.travelledDistance;
+                await this.changeMileageAbove(travel1.car.id, -(travel1.travelledDistance*2), travel1.newMileage, null);
             } catch(err){
                 return errorHandler(res, "Error at car change (origin change)!", 500);
             }
 
+            //A kilóméteróra állást az új autónál kiszámolni az adott dátumhoz
+            try {
+                startMileage = await this.getHighestMileage(patchableCarId, car.mileage, travel1.startDate);
+            }catch(err) {
+                return errorHandler(res, "Error at new Mileage calculation!", 500);
+            }
+            if(travel1SmallerPair){
+                req.body.newMileage = startMileage + travel1.travelledDistance;
+                travel2PatchProperties.newMileage = startMileage + (2*travel1.travelledDistance);
+            } else {
+                req.body.newMileage = startMileage + (2*travel1.travelledDistance);
+                travel2PatchProperties.newMileage = startMileage + travel1.travelledDistance;
+            }
+
             //Update | azok az autók kilóméteróra állását ahova berakjuk (növelni)
             try {
-                await this.changeMileageAbove(patchableCarId, travel1.travelledDistance, null, String(travel1.startDate));
+                await this.changeMileageAbove(patchableCarId, (travel1.travelledDistance*2), startMileage, null);
             } catch(err){
                 return errorHandler(res, "Error at car change (new change)!", 500);
             }
@@ -218,16 +229,16 @@ export class TravelService extends Service {
         if(req.body.startDate && req.body.startDate !== travel1.startDate) {
             //Update azokat, amik a régi és a beállított érték között van
             // Időben előrébb lett rakva az utazás -> csökkenteni kell az utazás hosszával a dolgokat
-            if(travel1.startDate < new Date(req.body.startDate)){
+            if(new Date(travel1.startDate) < new Date(req.body.startDate)){
                 try{
-                    await this.changeMileageInterval(patchableCarId, -(travel1.travelledDistance), travel1.startDate, new Date(req.body.startDate));
+                    await this.changeMileageInterval(patchableCarId, -(travel1.travelledDistance*2), travel1.startDate, new Date(req.body.startDate));
                 }catch(err) {
                     return errorHandler(res, "Error at start date change (if branch)!", 500);
                 }
             }//Időben visszább lett rakva az utazás -> növelni kell az utazás hosszával
             else {
                 try{
-                    await this.changeMileageInterval(patchableCarId, (travel1.travelledDistance), new Date(req.body.startDate), travel1.startDate);
+                    await this.changeMileageInterval(patchableCarId, (travel1.travelledDistance*2), new Date(req.body.startDate), travel1.startDate);
                 }catch(err) {
                     return errorHandler(res, "Error at start date change (else branch)!", 500);
                 }
@@ -235,7 +246,6 @@ export class TravelService extends Service {
             //Kilóméteróra állásokat újraszámolni
             try {
                 startMileage = await this.getHighestMileage(patchableCarId, travel1.car.mileage, new Date(req.body.startDate));
-                console.log(startMileage);
             } catch(err) {
                 return errorHandler(res, "Error during mileage recalculate at start date change!", 500);
             }
@@ -251,10 +261,10 @@ export class TravelService extends Service {
         }
         if(req.body.travelledDistance && req.body.travelledDistance !== travel1.travelledDistance) {
             const mileageDifference = req.body.travelledDistance - travel1.travelledDistance;
-            
+
             //Update adatbázisba levő értékeket
             try {
-                await this.changeMileageAbove(patchableCarId, mileageDifference, startMileage, null);
+                await this.changeMileageAbove(patchableCarId, (mileageDifference*2), startMileage, null);
             }catch(err) {
                 return errorHandler(res, "Error during mileage update!", 500);
             }
@@ -262,11 +272,11 @@ export class TravelService extends Service {
             //Beállítás mentésre
 
             if(travel1SmallerPair){
-                req.body.newMileage = startMileage + travel1.travelledDistance;
-                travel2PatchProperties.newMileage = startMileage + (2*travel1.travelledDistance);
+                req.body.newMileage = startMileage + req.body.travelledDistance;
+                travel2PatchProperties.newMileage = req.body.newMileage + req.body.travelledDistance;
             } else {
-                req.body.newMileage = startMileage + (2*travel1.travelledDistance);
-                travel2PatchProperties.newMileage = startMileage + travel1.travelledDistance;
+                travel2PatchProperties.newMileage = startMileage + req.body.travelledDistance;
+                req.body.newMileage = travel2PatchProperties.newMileage + req.body.travelledDistance;
             }
             travel2PatchProperties.travelledDistance = req.body.travelledDistance;
         }
@@ -281,7 +291,7 @@ export class TravelService extends Service {
             await this.repository.update({id: travel2.id}, travel2Patch);
             res.status(200).send({patched: true});
         }catch(err) {
-            errorHandler(res);
+            errorHandler(res, "BAD_REQUEST_No values to change!",400);
         }
     }
 
@@ -407,7 +417,6 @@ export class TravelService extends Service {
     }
 
     private changeMileageInterval = (carId: number, changeBy: number, lowerLimit: Date, upperLimit: Date) => {
-        console.log("carId,",carId,"\nchangeBy:",changeBy,"\nlowerLimit:",lowerLimit,"\nupperLimit:",upperLimit);
         return this.repository.createQueryBuilder().update(
             {
                 newMileage: () => ("newMileage + "+changeBy)
