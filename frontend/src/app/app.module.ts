@@ -26,6 +26,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { AddDriverComponent } from './driver-list/add-driver/add-driver.component';
 import { AddCarComponent } from './car-list/add-car/add-car.component';
 import { AddTravelComponent } from './travel-list/add-travel/add-travel.component';
+import { MonthlyComponent } from './report/monthly/monthly.component';
 
 @NgModule({
   declarations: [
@@ -40,7 +41,8 @@ import { AddTravelComponent } from './travel-list/add-travel/add-travel.componen
     TravelComponent,
     AddDriverComponent,
     AddCarComponent,
-    AddTravelComponent
+    AddTravelComponent,
+    MonthlyComponent
 
   ],
   imports: [

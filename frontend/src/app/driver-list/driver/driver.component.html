@@ -1,4 +1,4 @@
-<mat-card class="card-body">
+<mat-card class="card-body" [ngClass]="{expired : isExpired}">
   <mat-card-header>
     <mat-card-title class="larger-font">{{driver.name}}</mat-card-title>
   </mat-card-header>
@@ -8,7 +8,7 @@
       <span>Address: <b>{{driver.address}}</b></span>
     </mat-card-subtitle>
     <p class="medium-font medium-margin-left-right space-between small-padding">
-      <span><u>Driver license number</u>: <b>{{driver.driverLicense}}</b>,</span>
+      <span><u>Driver license number</u>: <b>{{driver.driverLicense}}</b></span>
     </p>
     <p class="medium-font medium-margin-left-right space-between small-padding">
       <span><u>Driver License Expiration Date</u>: <b>{{driver.driverLicenseExpiration}}</b></span>

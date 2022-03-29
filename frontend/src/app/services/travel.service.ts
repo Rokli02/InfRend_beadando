@@ -29,17 +29,7 @@ export class TravelService {
     return lastValueFrom(this.http.post(this.url, travelForSave));
   }
 
-  updateTravel(id: number, travel: SaveTravel) {/*
-    const travelForSave : SaveTravel= {
-      from: travel.from ? travel.from : undefined,
-      to: travel.to ? travel.to : undefined,
-      purpose: travel.purpose ? travel.purpose : undefined,
-      startDate: travel.startDate ? travel.startDate : undefined,
-      travelledDistance: travel.travelledDistance ? travel.travelledDistance : undefined,
-      newMileage: travel.newMileage ? travel.newMileage : undefined,
-      carId: travel.car.id ? travel.car.id : undefined,
-      driverId: travel.driver.id ? travel.driver.id : undefined,
-    };*/
+  updateTravel(id: number, travel: SaveTravel) {
     return lastValueFrom(this.http.patch(`${this.url}/${id}`,travel));
   }
 

@@ -10,9 +10,7 @@
             <mat-label>Name</mat-label>
             <input type="text" matInput maxlength="256" formControlName="name" #name/>
             <mat-hint class="small-text" align="end">{{name.value.length}}/256</mat-hint>
-            <mat-error *ngIf="!this.driverForm.get('name')?.valid">
-
-            </mat-error>
+            <mat-error *ngIf="!this.driverForm.get('name')?.valid">Name is required</mat-error>
           </mat-form-field>
           <mat-form-field class="input-format mb-1">
             <mat-label>Birthdate</mat-label>

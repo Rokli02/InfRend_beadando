@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { CarListComponent } from './car-list/car-list.component';
 import { DriverListComponent } from './driver-list/driver-list.component';
+import { MonthlyComponent } from './report/monthly/monthly.component';
 import { ReportComponent } from './report/report.component';
 import { AddTravelComponent } from './travel-list/add-travel/add-travel.component';
 import { TravelListComponent } from './travel-list/travel-list.component';
@@ -23,6 +24,10 @@ const routes: Routes = [
   {
     path: 'report',
     component: ReportComponent
+  },
+  {
+    path: 'report/monthly',
+    component: MonthlyComponent
   }
 ];
 

@@ -313,24 +313,23 @@ export class TravelService extends Service {
         }
 
         let year : number = Number(req.query.year),
-            month : number = Number(req.query.month);
+            month : number = Number(req.query.month)-1;
 
         const dateBelowValues = new Date(year, month);
-        if(month === 12){
-            year++;
-        } else {
-            month++;
-        }
+        month++;
         const dateAboveValues = new Date(year, month);
         const travels: Travel[] = unfilteredTravels.filter((value) => {
-            (value.startDate >= dateBelowValues && value.startDate < dateAboveValues)
+            return (new Date(value.startDate) > dateBelowValues && new Date(value.startDate) <= dateAboveValues)
         });
 
+        if(travels.length < 1){
+            return errorHandler(res,"NO_DATA", 404);
+        }
 
-        const car = travels[0].car;
+        const car = unfilteredTravels[0].car;
         const lowestHighestMileage = this.lowestHighestPairs(travels);
-        const privateSummary: Summary = this.costSummary(travels.filter((value) => value.purpose === Purpose.PRIVATE), travels[0].car);
-        const businesSummary: Summary = this.costSummary(travels.filter((value) => value.purpose === Purpose.BUSINESS), travels[0].car);
+        const privateSummary: Summary = this.costSummary(travels.filter((value) => {return value.purpose === Purpose.PRIVATE}), travels[0].car);
+        const businesSummary: Summary = this.costSummary(travels.filter((value) => {return value.purpose === Purpose.BUSINESS}), travels[0].car);
         let travelsFromToLocation: string[] = [];
         for(let travel of travels) {
             travelsFromToLocation.push(travel.from+" - "+travel.to);

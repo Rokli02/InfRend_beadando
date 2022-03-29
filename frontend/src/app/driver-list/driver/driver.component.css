@@ -48,3 +48,8 @@
   font-size: 1.2em;
   width: 100px;
 }
+
+.expired {
+  background-color: rgba(211, 56, 56, 0.9);
+  color: aliceblue;
+}

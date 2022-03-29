@@ -14,6 +14,7 @@ export class DriverComponent implements OnInit, OnDestroy {
   @Output() driverEdited = new EventEmitter<{id: number, driver: any}>();
   @Output() driverDeleted = new EventEmitter<number>();
   dialogSub !: Subscription;
+  isExpired !: boolean;
 
   constructor(private dialog: MatDialog) {}
 
@@ -23,7 +24,9 @@ export class DriverComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.isExpired = this.driverLicenseExpired(this.driver.driverLicenseExpiration);
+  }
 
   deleteDriver() {
     this.driverDeleted.emit(this.driver.id);
@@ -45,5 +48,16 @@ export class DriverComponent implements OnInit, OnDestroy {
         this.driverEdited.emit({id: this.driver.id, driver: value});
       }
     });
+  }
+
+  private driverLicenseExpired(driverExp : string | Date) {
+    const given = new Date(driverExp);
+    const now = new Date(Date.now());
+    const calculatedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if(calculatedNow > given){
+      return true;
+    }
+    return false;
   }
 }
