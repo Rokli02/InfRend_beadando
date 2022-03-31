@@ -13,7 +13,7 @@
     <p class="medium-font medium-margin-left-right space-between small-padding">
       <span><u>Driver License Expiration Date</u>: <b>{{driver.driverLicenseExpiration}}</b></span>
     </p>
-    <mat-card-actions class="card-buttons-end">
+    <mat-card-actions class="card-buttons-end" *ngIf="isAdmin()">
       <button mat-raised-button color="primary" class="button-format" (click)="editDriver()">Edit</button>
       <button mat-raised-button color="warn" class="button-format" (click)="deleteDriver()">Delete</button>
     </mat-card-actions>

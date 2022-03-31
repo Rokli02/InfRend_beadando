@@ -1,8 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { Driver } from '../models/Driver';
 import { DriverService } from '../services/driver.service';
+import { UserService } from '../services/user.service';
 import { AddDriverComponent } from './add-driver/add-driver.component';
 
 @Component({
@@ -16,7 +18,8 @@ export class DriverListComponent implements OnInit, OnDestroy {
   text: string = "There are no drivers in the database!";
 
   constructor(private dialog: MatDialog,
-              private driverService: DriverService) {}
+              private driverService: DriverService,
+              private userService: UserService) {}
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -28,7 +31,7 @@ export class DriverListComponent implements OnInit, OnDestroy {
     try {
       this.drivers = await this.driverService.getDrivers();
     }catch(err) {
-      this.text = "Some problem occurred during loading!";
+      this.text = this.userService.logoutCatchFunction(err);
     }
   }
 
@@ -121,5 +124,9 @@ export class DriverListComponent implements OnInit, OnDestroy {
     const day: string = (date.getDate()) < 10 ? "0"+(date.getDate()) : String(date.getDate());
 
     return date.getFullYear()+"-"+ month + "-" + day;
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

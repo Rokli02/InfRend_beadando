@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { SaveTravel, Travel } from 'src/app/models/Travel';
+import { UserService } from 'src/app/services/user.service';
 import { AddTravelComponent } from '../add-travel/add-travel.component';
 
 @Component({
@@ -15,7 +16,8 @@ export class TravelComponent implements OnInit, OnDestroy {
   @Output() travelDeleted = new EventEmitter<number>();
   dialogSub !: Subscription;
 
-  constructor(private dialog: MatDialog) { }
+  constructor(private dialog: MatDialog,
+              private userService: UserService) { }
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -46,5 +48,9 @@ export class TravelComponent implements OnInit, OnDestroy {
 
   deleteTravel() {
     this.travelDeleted.emit(this.travel.id);
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

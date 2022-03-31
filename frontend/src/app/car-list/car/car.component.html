@@ -11,7 +11,7 @@
     <p class="medium-font space-between small-padding medium-margin-left-right">
       <span><u>Mileage</u>: <b>{{car.mileage}} km</b></span>
     </p>
-    <mat-card-actions class="card-buttons-end">
+    <mat-card-actions class="card-buttons-end" *ngIf="isAdmin()">
       <button mat-raised-button color="primary" class="button-format" (click)="editCar()">Edit</button>
       <button mat-raised-button color="warn" class="button-format" (click)="deleteCar()">Delete</button>
     </mat-card-actions>

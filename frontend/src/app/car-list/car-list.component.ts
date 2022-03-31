@@ -1,9 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { Car } from '../models/Car';
 import { CarService } from '../services/car.service';
 import { AddCarComponent } from './add-car/add-car.component';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-car-list',
@@ -16,7 +18,8 @@ export class CarListComponent implements OnInit, OnDestroy {
   text: string = "There are no cars in the database";
 
   constructor(private dialog: MatDialog,
-              private carService: CarService) { }
+              private carService: CarService,
+              private userService: UserService) { }
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -28,7 +31,7 @@ export class CarListComponent implements OnInit, OnDestroy {
     try {
       this.cars = await this.carService.getCars();
     }catch(err) {
-      this.text = "Some problem occurred during loading!";
+      this.text = this.userService.logoutCatchFunction(err);
     }
   }
 
@@ -108,5 +111,9 @@ export class CarListComponent implements OnInit, OnDestroy {
     }
 
     alert("Couldn't delete car, because it isn't on the list!");
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

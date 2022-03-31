@@ -1,5 +1,5 @@
 <div class="container">
-  <button mat-stroked-button class="add-new-button" (click)="addTravel()">+ Add New Travel</button>
+  <button mat-stroked-button class="add-new-button" (click)="addTravel()" *ngIf="isAdmin()">+ Add New Travel</button>
   <div class="list-container" *ngIf="travels.length > 0; else noTravels">
     <span *ngFor="let travel of travels">
       <app-travel [travel]="travel" (travelEdited)="editTravel($event)" (travelDeleted)="deleteTravel($event)"></app-travel>

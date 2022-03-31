@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit} from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterState, RouterStateSnapshot } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,23 +11,35 @@ import { Subscription } from 'rxjs';
 export class NavbarComponent implements OnInit, OnDestroy{
   active !: boolean[];
   routerEventSub !: Subscription;
-  constructor(private router: Router) {}
+  state !: RouterState;
+  constructor(private router: Router,
+              private userService: UserService) {}
 
   ngOnDestroy(): void {
     this.routerEventSub.unsubscribe();
   }
 
   ngOnInit(): void {
+    this.state = this.router.routerState;
     this.routerEventSub = this.router.events.subscribe((value)=> {
       if(value instanceof NavigationEnd) {
         this.chooseActivatedMenu(value.url.toString());
       }
     });
-    this.active = new Array<boolean>(4);
+    this.active = new Array<boolean>(5);
+    this.chooseActivatedMenu(this.state.snapshot.url);
+  }
+
+  logout() {
+    this.userService.logoutUser()
+  }
+
+  forwardToSignup() {
+    this.router.navigate(['/']);
   }
 
   forwardToCars() {
-    this.router.navigate(['/']);
+    this.router.navigate(['/car']);
   }
 
   forwardToDrivers() {
@@ -49,18 +62,22 @@ export class NavbarComponent implements OnInit, OnDestroy{
 
   private chooseActivatedMenu(current: string) {
     this.deactivateAll();
+    console.log("current:",current);
     switch(current) {
       case "/" : {
         this.active[0] = true;
       } break;
-      case "/driver" : {
+      case "/car" : {
         this.active[1] = true;
       } break;
-      case "/travel" : {
+      case "/driver" : {
         this.active[2] = true;
       } break;
-      case "/report" : {
+      case "/travel" : {
         this.active[3] = true;
+      } break;
+      case "/report" : {
+        this.active[4] = true;
       } break;
       default : {
       }

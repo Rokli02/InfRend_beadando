@@ -20,8 +20,8 @@ export class AddCarComponent implements OnInit, OnDestroy {
   consumptionErrorMsg : string = "Consumption is required and must be above 0!";
 
   constructor(private fb: FormBuilder,
-    private dialogRef: MatDialogRef<any>,
-    @Inject(MAT_DIALOG_DATA) public data: Car) { }
+              private dialogRef: MatDialogRef<any>,
+              @Inject(MAT_DIALOG_DATA) public data: Car) { }
 
   //unsubscribe from every observable
   ngOnDestroy(): void {

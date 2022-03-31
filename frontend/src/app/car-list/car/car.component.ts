@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { Car } from 'src/app/models/Car';
+import { UserService } from 'src/app/services/user.service';
 import { AddCarComponent } from '../add-car/add-car.component';
 
 @Component({
@@ -15,7 +16,8 @@ export class CarComponent implements OnInit, OnDestroy {
   @Output() carEdited = new EventEmitter<{id: number, car: Car}>();
   @Output() carDeleted = new EventEmitter<number>();
 
-  constructor(private dialog: MatDialog) { }
+  constructor(private dialog: MatDialog,
+              private userService: UserService) { }
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -47,5 +49,9 @@ export class CarComponent implements OnInit, OnDestroy {
       }
       console.log(value);
     });
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

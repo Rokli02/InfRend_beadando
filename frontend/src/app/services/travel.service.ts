@@ -3,16 +3,20 @@ import { Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { MonthlyReport } from '../models/MonthlyReport';
 import { SaveTravel, Travel } from '../models/Travel';
+import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TravelService {
   private url: string = 'http://localhost:3000/api/travel';
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,
+              private userService: UserService) {}
 
   getTravels() {
-    return lastValueFrom(this.http.get<Travel[]>(this.url));
+    return lastValueFrom(this.http.get<Travel[]>(this.url, {
+      headers: this.userService.getHeader()
+    }));
   }
 
   saveTravel(travel: Travel) {
@@ -26,15 +30,21 @@ export class TravelService {
       carId: travel.car.id,
       driverId: travel.driver.id
     };
-    return lastValueFrom(this.http.post(this.url, travelForSave));
+    return lastValueFrom(this.http.post(this.url, travelForSave, {
+      headers: this.userService.getHeader()
+    }));
   }
 
   updateTravel(id: number, travel: SaveTravel) {
-    return lastValueFrom(this.http.patch(`${this.url}/${id}`,travel));
+    return lastValueFrom(this.http.patch(`${this.url}/${id}`, travel, {
+      headers: this.userService.getHeader()
+    }));
   }
 
   deleteTravel(id: number) {
-    return lastValueFrom(this.http.delete(`${this.url}/${id}`));
+    return lastValueFrom(this.http.delete(`${this.url}/${id}`, {
+      headers: this.userService.getHeader()
+    }));
   }
 
   getMonthlyReport(licensePlate: string, year: number, month: number) {
@@ -43,7 +53,8 @@ export class TravelService {
         licensePlate: licensePlate,
         year: year,
         month: month
-      }
+      },
+      headers: this.userService.getHeader()
     }))
   }
 }

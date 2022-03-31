@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { Driver } from 'src/app/models/Driver';
+import { UserService } from 'src/app/services/user.service';
 import { AddDriverComponent } from '../add-driver/add-driver.component';
 
 @Component({
@@ -16,7 +17,8 @@ export class DriverComponent implements OnInit, OnDestroy {
   dialogSub !: Subscription;
   isExpired !: boolean;
 
-  constructor(private dialog: MatDialog) {}
+  constructor(private dialog: MatDialog,
+              private userService: UserService) {}
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -59,5 +61,9 @@ export class DriverComponent implements OnInit, OnDestroy {
       return true;
     }
     return false;
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

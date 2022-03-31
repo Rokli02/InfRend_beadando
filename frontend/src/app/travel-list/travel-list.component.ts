@@ -1,8 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { SaveTravel, Travel } from '../models/Travel';
 import { TravelService } from '../services/travel.service';
+import { UserService } from '../services/user.service';
 import { AddTravelComponent } from './add-travel/add-travel.component';
 
 @Component({
@@ -16,7 +18,8 @@ export class TravelListComponent implements OnInit, OnDestroy {
   text: string = "There are no travels in the database!";
 
   constructor(private dialog: MatDialog,
-              private travelService: TravelService) {};
+              private travelService: TravelService,
+              private userService: UserService) {};
 
   ngOnDestroy(): void {
     if(this.dialogSub){
@@ -28,7 +31,7 @@ export class TravelListComponent implements OnInit, OnDestroy {
     try {
       this.travels = await this.travelService.getTravels();
     }catch(err){
-      this.text = "Some problem occurred during loading!";
+      this.text = this.userService.logoutCatchFunction(err);
     }
   }
 
@@ -79,5 +82,9 @@ export class TravelListComponent implements OnInit, OnDestroy {
           console.log(err);
     }
 
+  }
+
+  isAdmin(){
+    return this.userService.isAdmin();
   }
 }

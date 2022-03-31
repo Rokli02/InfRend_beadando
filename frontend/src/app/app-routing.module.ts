@@ -3,31 +3,53 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { CarListComponent } from './car-list/car-list.component';
 import { DriverListComponent } from './driver-list/driver-list.component';
+import { LoginComponent } from './login/login.component';
+import { MenuComponent } from './menu/menu.component';
 import { MonthlyComponent } from './report/monthly/monthly.component';
 import { ReportComponent } from './report/report.component';
-import { AddTravelComponent } from './travel-list/add-travel/add-travel.component';
+import { AuthUserService } from './services/auth-user.service';
+import { SignupComponent } from './signup/signup.component';
 import { TravelListComponent } from './travel-list/travel-list.component';
 
 const routes: Routes = [
   {
     path: '',
-    component: CarListComponent
+    component: MenuComponent,
+    canActivate: [AuthUserService],
+    children: [
+      {
+        path: '',
+        component: SignupComponent
+      },
+      {
+        path: 'car',
+        component: CarListComponent
+      },
+      {
+        path: 'driver',
+        component: DriverListComponent
+      },
+      {
+        path: 'travel',
+        component: TravelListComponent
+      },
+      {
+        path: 'report',
+        component: ReportComponent
+      },
+      {
+        path: 'report/monthly',
+        component: MonthlyComponent
+      }
+    ]
   },
   {
-    path: 'driver',
-    component: DriverListComponent
+    path: 'login',
+    component: LoginComponent
   },
   {
-    path: 'travel',
-    component: TravelListComponent
-  },
-  {
-    path: 'report',
-    component: ReportComponent
-  },
-  {
-    path: 'report/monthly',
-    component: MonthlyComponent
+    path: '**',
+    redirectTo: '/login'
   }
 ];
 

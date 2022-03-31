@@ -28,7 +28,7 @@
         <span>Type: <b>{{travel.car.type}}</b></span>
       </div>
     </div>
-    <mat-card-actions class="card-buttons-end">
+    <mat-card-actions class="card-buttons-end" *ngIf="isAdmin()">
       <button mat-raised-button color="primary" class="button-format" (click)="editTravel()">Edit</button>
       <button mat-raised-button color="warn" class="button-format" (click)="deleteTravel()">Delete</button>
     </mat-card-actions>
