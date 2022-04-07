@@ -30,9 +30,28 @@
               <mat-card-title class="large-text">Travels</mat-card-title>
             </mat-card-header>
             <mat-card-content class="pt-2">
-              <div class="flex-content align-center align-middle" *ngIf="monthlyReport !== null && monthlyReport.travels !== null">
-                <label class="m-1 medium-text" *ngFor="let travel of monthlyReport.travels">{{travel}}</label>
-              </div>
+                <mat-card class="box-shadow align-center mb-1" *ngFor="let travel of monthlyReport.travels">
+                  <mat-card-header class="align-center mb-1 half-bold medium-text mb-1 pb-1">{{travel.from}} - {{travel.to}}</mat-card-header>
+                  <mat-card-content>
+                    <mat-card-subtitle class="space-between mb-1">
+                      <span>Purpose: {{travel.purpose}}</span>
+                      <span>Start date: {{travel.startDate}}</span>
+                    </mat-card-subtitle>
+                    <div class="space-between mb-1">
+                      <span>Travelled distance: {{travel.travelledDistance}} km</span>
+                      <span>New mileage: {{travel.newMileage}} km</span>
+                    </div>
+                    <hr>
+                    <p>Driver:</p>
+                    <div class="space-between mb-1">
+                      <span>Name: {{travel.driver.name}}</span>
+                      <span>License: {{travel.driver.driverLicense}}</span>
+                    </div>
+                    <div>
+                      <span>Birthdate: {{travel.driver.birthdate}}</span>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
             </mat-card-content>
           </mat-card>
         </div>

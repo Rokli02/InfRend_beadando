@@ -1,10 +1,11 @@
 import { Car } from "./Car";
+import { Travel } from "./Travel";
 
 export interface MonthlyReport {
   car : Car;
   startingMileage : number;
   finishingMileage : number;
-  travels : string[];
+  travels : Travel[];
   privateSummary : Summary;
   businessSummary : Summary;
 }

@@ -15,6 +15,10 @@
   font-size: 2rem;
 }
 
+.half-bold {
+  font-weight: 500;
+}
+
 .m-2 {
   margin: 2rem;
 }

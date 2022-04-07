@@ -330,16 +330,18 @@ export class TravelService extends Service {
         const lowestHighestMileage = this.lowestHighestPairs(travels);
         const privateSummary: Summary = this.costSummary(travels.filter((value) => {return value.purpose === Purpose.PRIVATE}), travels[0].car);
         const businesSummary: Summary = this.costSummary(travels.filter((value) => {return value.purpose === Purpose.BUSINESS}), travels[0].car);
-        let travelsFromToLocation: string[] = [];
+        /*let travelsFromToLocation: string[] = [];
         for(let travel of travels) {
             travelsFromToLocation.push(travel.from+" - "+travel.to);
-        }
+        }*/
+
+
         
         let monthlyReport : MonthlyReport = {
             car: car,
             startingMileage: lowestHighestMileage[0],
             finishingMileage: lowestHighestMileage[1],
-            travels: travelsFromToLocation,
+            travels: travels,
             privateSummary: privateSummary,
             businessSummary: businesSummary
         };

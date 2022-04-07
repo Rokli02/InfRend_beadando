@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MonthlyReport } from 'src/app/models/MonthlyReport';
 import { TravelService } from 'src/app/services/travel.service';
+import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-monthly',
@@ -15,7 +16,8 @@ export class MonthlyComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private travelService : TravelService) { }
+              private travelService : TravelService,
+              private userService: UserService) { }
 
   async ngOnInit() {
     this.reportSlab = {
@@ -28,10 +30,10 @@ export class MonthlyComponent implements OnInit {
       try{
         this.monthlyReport = await this.travelService.getMonthlyReport(String(this.reportSlab.licensePlate), Number(this.reportSlab.year), Number(this.reportSlab.month));
       } catch(err) {
+        console.log(this.userService.logoutCatchFunction(err));
         if(err instanceof HttpErrorResponse){
           alert(err.error === "NO_DATA" ? "There are no data to make a monthly report!" : "Couldn't load report!");
         } else {
-          console.log("Couldn't load report!");
           alert("Couldn't load report!");
         }
         this.router.navigate(['report']);
@@ -39,7 +41,6 @@ export class MonthlyComponent implements OnInit {
     } else {
       this.router.navigate(['report']);
     }
-
   }
 
 

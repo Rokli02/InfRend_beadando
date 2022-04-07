@@ -97,6 +97,7 @@ export class UserService {
     if(err instanceof HttpErrorResponse){
       if(err.status === 401 && err.error === "Couldn't grant access!"){
         this.logoutUser();
+        return "Your token has expired!";
       }
     }
     return "Some problem occurred during loading!";
